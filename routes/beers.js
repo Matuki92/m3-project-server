@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Beer = require('./../models/beer');
 
 router.get('/', (req, res, next) => {
@@ -20,12 +21,22 @@ router.get('/:id', (req, res, next) => {
         model: 'User'
       }})
     .then((result) => {
+      if (!result) {
+        return res.status(404).json({code: 'not-found'});
+      }
       res.json(result);
     })
     .catch(next);
 });
 
-router.post('/:id', (req, res, next) => {
+router.post('/add', (req, res, next) => {
+
+  for (let item in req.body) {
+    if (!item) {
+      return res.status(422).json({code: 'Unprocessable-entity'});
+    }
+  }
+
   const data = {
     name: req.body.name,
     type: req.body.type,
@@ -49,10 +60,17 @@ router.post('/:id', (req, res, next) => {
 });
 
 router.put('/:id', (req, res, next) => {
-  // check stuff
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return next();
+  }
+
   Beer.findById(req.params.id)
     .then((result) => {
-      // check result stuff
+      if (!result) {
+        return res.status(404).json({code: 'not-found'});
+      }
+
       result.name = req.body.name;
       result.type = req.body.type;
       result.abv = req.body.abv;
@@ -67,6 +85,27 @@ router.put('/:id', (req, res, next) => {
       result.save()
         .then((result) => {
           res.json(result);
+        })
+        .catch(next);
+    })
+    .catch(next);
+});
+
+router.delete('/:id', (req, res, next) => {
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return next();
+  }
+
+  Beer.findById(req.params.id)
+    .then((result) => {
+      if (!result) {
+        return res.status(404).json({code: 'not-found'});
+      }
+
+      result.remove()
+        .then(() => {
+          res.send();
         })
         .catch(next);
     })
