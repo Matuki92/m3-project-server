@@ -11,6 +11,14 @@ router.get('/', (req, res, next) => {
     .catch(next);
 });
 
+router.get('/active', (req, res, next) => {
+  Beer.find({active: true})
+    .then(result => {
+      res.json(result);
+    })
+    .catch(next);
+});
+
 router.get('/:id', (req, res, next) => {
   Beer.findById(req.params.id)
     .populate({
@@ -30,7 +38,6 @@ router.get('/:id', (req, res, next) => {
 });
 
 router.post('/add', (req, res, next) => {
-
   for (let item in req.body) {
     if (!item) {
       return res.status(422).json({code: 'Unprocessable-entity'});
@@ -60,7 +67,6 @@ router.post('/add', (req, res, next) => {
 });
 
 router.put('/:id', (req, res, next) => {
-
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return next();
   }
@@ -92,7 +98,6 @@ router.put('/:id', (req, res, next) => {
 });
 
 router.delete('/:id', (req, res, next) => {
-
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return next();
   }

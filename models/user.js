@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-// const ObjectId = Schema.Types.ObjectId;
+const ObjectId = Schema.Types.ObjectId;
 
 const userSchema = new Schema({
   username: {
@@ -14,6 +14,13 @@ const userSchema = new Schema({
   role: {
     type: String,
     enum: ['user', 'admin']
+  },
+  favorites: {
+    type: [{
+      type: ObjectId,
+      ref: 'Beer'
+    }],
+    default: []
   }
 });
 
