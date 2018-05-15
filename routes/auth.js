@@ -59,7 +59,7 @@ router.post('/signup', (req, res, next) => {
       const newUser = User({
         username,
         password: hashPass,
-        role: password === 'admin' ? 'admin' : 'user'
+        role: password === 'admin' ? 'admin' : 'user' // @todo I know this is LOL but this is just a bootcamp project
       });
 
       return newUser.save()

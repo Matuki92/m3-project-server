@@ -3,16 +3,16 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Comment = require('./../models/comment');
 
-router.post('/add', (req, res, next) => {
-  const data = {
-    content: req.body.comment,
-    date: new Date(),
-    owner: req.session.currentUser._id
-  };
-
-  const comment = new Comment(data);
-
-  comment.save()
+router.get('/user/:id', (req, res, next) => {
+  Comment.find({owner: req.params.id})
+    .populate({
+      path: 'owner',
+      model: 'User'
+    })
+    .populate({
+      path: 'beer',
+      model: 'Beer'
+    })
     .then((result) => {
       res.json(result);
     })

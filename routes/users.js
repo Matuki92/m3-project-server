@@ -25,21 +25,49 @@ router.get('/:id', (req, res, next) => {
     .catch(next);
 });
 
-router.put('/:id', (req, res, next) => {
-  User.findById(req.params.id)
-    .then(result => {
-      const favorites = req.body.favorites;
+router.put('/me', (req, res, next) => {
+  const $updates = {
+    $set: {
+      username: req.body.username
+    }
+  };
+  const options = { 'new': true };
+  User.findOneAndUpdate({_id: req.session.current._id}, $updates, options)
+    .then((result) => {
+      req.session.currentUser = result;
+      res.json(result);
+    })
+    .catch(next);
+});
 
-      if (favorites) {
-        //check if alrweeady in the favorites
-        result.favorites = favorites;
-      }
+router.post('/me/favorites', (req, res, next) => {
+  const beerId = req.body.beer;
+  const $updates = {
+    $addToSet: {
+      favorites: beerId
+    }
+  };
+  const options = { 'new': true };
+  User.findOneAndUpdate({_id: req.session.currentUser._id}, $updates, options)
+    .then((result) => {
+      req.session.currentUser = result;
+      res.status(204).send();
+    })
+    .catch(next);
+});
 
-      result.save()
-        .then(() => {
-          req.session.currentUser = result;
-          res.json(result);
-        });
+router.delete('/me/favorites/:beerId', (req, res, next) => {
+  const beerId = req.params.beerId;
+  const $updates = {
+    $pull: {
+      favorites: beerId
+    }
+  };
+  const options = { 'new': true };
+  User.findOneAndUpdate({_id: req.session.currentUser._id}, $updates, options)
+    .then((result) => {
+      req.session.currentUser = result;
+      res.status(204).send();
     })
     .catch(next);
 });

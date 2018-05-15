@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const moment = require('moment');
+
 const Beer = require('./../models/beer');
+const Comment = require('./../models/comment');
 
 router.get('/', (req, res, next) => {
   Beer.find({})
@@ -62,6 +65,39 @@ router.post('/add', (req, res, next) => {
   beer.save()
     .then((result) => {
       res.json(result);
+    })
+    .catch(next);
+});
+
+router.post('/comments/add', (req, res, next) => {
+  const date = new Date();
+  const dateString = moment(date).format('MMMM Do YYYY, h:mm:ss a');
+
+  const data = {
+    content: req.body.text,
+    date: dateString,
+    owner: req.session.currentUser._id,
+    beer: req.body.beerId
+  };
+
+  const comment = new Comment(data);
+  comment.save()
+    .then((comment) => {
+      const options = {
+        new: true
+      };
+
+      return Beer.findOneAndUpdate({_id: req.body.beerId}, {$addToSet: {comments: comment._id}}, options)
+        .populate({
+          path: 'comments',
+          model: 'Comment',
+          populate: {
+            path: 'owner',
+            model: 'User'
+          }})
+        .then(beer => {
+          res.json(beer);
+        });
     })
     .catch(next);
 });

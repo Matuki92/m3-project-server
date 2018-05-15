@@ -4,10 +4,14 @@ const ObjectId = Schema.Types.ObjectId;
 
 const commentSchema = new Schema({
   content: String,
-  date: Date,
+  date: String,
   owner: {
     type: ObjectId,
     ref: 'users'
+  },
+  beer: {
+    type: ObjectId,
+    ref: 'beers'
   }
 });
 
