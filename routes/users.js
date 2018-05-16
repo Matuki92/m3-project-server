@@ -56,6 +56,18 @@ router.post('/me/favorites', (req, res, next) => {
     .catch(next);
 });
 
+router.delete('/:id', (req, res, next) => {
+  if (req.session.currentUser.role !== 'admin') {
+    return res.next();
+  }
+
+  User.findOneAndRemove({_id: req.params.id})
+    .then(() => {
+      res.status(204).send();
+    })
+    .catch(next);
+});
+
 router.delete('/me/favorites/:beerId', (req, res, next) => {
   const beerId = req.params.beerId;
   const $updates = {

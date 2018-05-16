@@ -8,6 +8,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
+require('dotenv').config();
 
 const beers = require('./routes/beers');
 const auth = require('./routes/auth');
@@ -18,7 +19,7 @@ const app = express();
 
 // DB CONNECT
 mongoose.Promise = Promise;
-mongoose.connect('mongodb://localhost/beers-db', {
+mongoose.connect(process.env.MONGODB_URI, {
   keepAlive: true,
   reconnectTries: Number.MAX_VALUE
 });
@@ -26,7 +27,7 @@ mongoose.connect('mongodb://localhost/beers-db', {
 // CORS
 app.use(cors({
   credentials: true,
-  origin: ['http://localhost:4200']
+  origin: [process.env.CLIENT_URL]
 }));
 
 // SESSION

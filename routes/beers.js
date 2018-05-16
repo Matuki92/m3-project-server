@@ -102,33 +102,32 @@ router.post('/comments/add', (req, res, next) => {
     .catch(next);
 });
 
-router.put('/:id', (req, res, next) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return next();
-  }
+router.put('/edit', (req, res, next) => {
+  // if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+  //   return next();
+  // }
+  const $updates = {
+    name: req.body.name,
+    type: req.body.type,
+    abv: req.body.abv,
+    ibu: req.body.ibu,
+    brewery: req.body.brewery,
+    color: req.body.color,
+    active: req.body.active,
+    pintPrice: req.body.pintPrice,
+    halfPintPrice: req.body.halfPintPrice
+  };
 
-  Beer.findById(req.params.id)
-    .then((result) => {
-      if (!result) {
+  const options = {
+    new: true
+  };
+
+  Beer.findByIdAndUpdate({_id: req.body._id}, $updates, options)
+    .then(beer => {
+      if (!beer) {
         return res.status(404).json({code: 'not-found'});
       }
-
-      result.name = req.body.name;
-      result.type = req.body.type;
-      result.abv = req.body.abv;
-      result.ibu = req.body.ibu;
-      result.brewery = req.body.brewery;
-      result.color = req.body.color;
-      result.active = req.body.active;
-      result.pintPrice = req.body.pintPrice;
-      result.halfPintPrice = req.body.halfPintPrice;
-      result.comments = req.body.comments;
-
-      result.save()
-        .then((result) => {
-          res.json(result);
-        })
-        .catch(next);
+      res.json(beer);
     })
     .catch(next);
 });
