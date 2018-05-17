@@ -6,23 +6,43 @@ const moment = require('moment');
 const Beer = require('./../models/beer');
 const Comment = require('./../models/comment');
 
+const options = {
+  new: true
+};
+
+// Get all the beers
 router.get('/', (req, res, next) => {
+  // req session?
   Beer.find({})
     .then(result => {
+      if (!result) {
+        return res.status(404).json({code: 'not-found'});
+      }
       res.json(result);
     })
     .catch(next);
 });
 
+// Get beers with active: true status only
 router.get('/active', (req, res, next) => {
   Beer.find({active: true})
     .then(result => {
+      if (!result) {
+        return res.status(404).json({code: 'not-found'});
+      }
       res.json(result);
     })
     .catch(next);
 });
 
+// Get one beer
 router.get('/:id', (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return next();
+  } else if (!req.session.currentUser) {
+    return res.status(401).json({code: 'unauthorized'});
+  }
+
   Beer.findById(req.params.id)
     .populate({
       path: 'comments',
@@ -40,7 +60,11 @@ router.get('/:id', (req, res, next) => {
     .catch(next);
 });
 
+// Add a new beer
 router.post('/add', (req, res, next) => {
+  if (req.session.currentUser.role !== 'admin') {
+    return res.status(401).json({code: 'unauthorized'});
+  }
   for (let item in req.body) {
     if (!item) {
       return res.status(422).json({code: 'Unprocessable-entity'});
@@ -69,7 +93,17 @@ router.post('/add', (req, res, next) => {
     .catch(next);
 });
 
+// Add a new comment to an existing beer
 router.post('/comments/add', (req, res, next) => {
+  if (!req.session.currentUser) {
+    return res.status(401).json({code: 'unauthorized'});
+  }
+  for (let item in req.body) {
+    if (!item) {
+      return res.status(422).json({code: 'Unprocessable-entity'});
+    }
+  }
+
   const date = new Date();
   const dateString = moment(date).format('MMMM Do YYYY, h:mm:ss a');
 
@@ -83,10 +117,6 @@ router.post('/comments/add', (req, res, next) => {
   const comment = new Comment(data);
   comment.save()
     .then((comment) => {
-      const options = {
-        new: true
-      };
-
       return Beer.findOneAndUpdate({_id: req.body.beerId}, {$addToSet: {comments: comment._id}}, options)
         .populate({
           path: 'comments',
@@ -96,16 +126,26 @@ router.post('/comments/add', (req, res, next) => {
             model: 'User'
           }})
         .then(beer => {
+          if (!beer) {
+            return res.status(404).json({code: 'not-found'});
+          }
           res.json(beer);
         });
     })
     .catch(next);
 });
 
+// Edit an existing beer
 router.put('/edit', (req, res, next) => {
-  // if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-  //   return next();
-  // }
+  if (req.session.currentUser.role !== 'admin') {
+    return res.status(401).json({code: 'unauthorized'});
+  }
+  for (let item in req.body) {
+    if (!item) {
+      return res.status(422).json({code: 'Unprocessable-entity'});
+    }
+  }
+
   const $updates = {
     name: req.body.name,
     type: req.body.type,
@@ -118,10 +158,6 @@ router.put('/edit', (req, res, next) => {
     halfPintPrice: req.body.halfPintPrice
   };
 
-  const options = {
-    new: true
-  };
-
   Beer.findByIdAndUpdate({_id: req.body._id}, $updates, options)
     .then(beer => {
       if (!beer) {
@@ -132,9 +168,12 @@ router.put('/edit', (req, res, next) => {
     .catch(next);
 });
 
+// Delete a beer
 router.delete('/:id', (req, res, next) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return next();
+  } else if (req.session.currentUser.role !== 'admin') {
+    return res.status(401).json({code: 'unauthorized'});
   }
 
   Beer.findById(req.params.id)
@@ -145,7 +184,7 @@ router.delete('/:id', (req, res, next) => {
 
       result.remove()
         .then(() => {
-          res.send();
+          res.status(204).send();
         })
         .catch(next);
     })
